@@ -1,5 +1,4 @@
 /*
-modified from pxt-servo/servodriver.ts
 load dependency
 "motorbit": "file:../pxt-motorbit"
 */
@@ -18,19 +17,8 @@ enum Offset {
 namespace motorbit {
 const PCA9685_ADDRESS = 0x40
 const MODE1 = 0x00
-const MODE2 = 0x01
-const SUBADR1 = 0x02
-const SUBADR2 = 0x03
-const SUBADR3 = 0x04
 const PRESCALE = 0xFE
 const LED0_ON_L = 0x06
-const LED0_ON_H = 0x07
-const LED0_OFF_L = 0x08
-const LED0_OFF_H = 0x09
-const ALL_LED_ON_L = 0xFA
-const ALL_LED_ON_H = 0xFB
-const ALL_LED_OFF_L = 0xFC
-const ALL_LED_OFF_H = 0xFD
 
 const STP_CHA_L = 2047
 const STP_CHA_H = 4095
@@ -67,11 +55,6 @@ export enum Steppers {
     STPM3_4 = 0x1
 }
 
-export enum SonarVersion {
-    V1 = 0x1,
-    V2 = 0x2
-}
-
 export enum Turns {
     //% blockId="T1B4" block="1/4"
     T1B4 = 90,
@@ -90,19 +73,11 @@ export enum Turns {
 }
 
 let initialized = false
-let matBuf = pins.createBuffer(17);
-let distanceBuf = 0;
 
 function i2cwrite(addr: number, reg: number, value: number) {
     let buf = pins.createBuffer(2)
     buf[0] = reg
     buf[1] = value
-    pins.i2cWriteBuffer(addr, buf)
-}
-
-function i2ccmd(addr: number, value: number) {
-    let buf = pins.createBuffer(1)
-    buf[0] = value
     pins.i2cWriteBuffer(addr, buf)
 }
 
@@ -140,10 +115,6 @@ function setFreq(freq: number): void {
 function setPwm(channel: number, on: number, off: number): void {
     if (channel < 0 || channel > 15)
         return;
-    //serial.writeValue("ch", channel)
-    //serial.writeValue("on", on)
-    //serial.writeValue("off", off)
-
     let buf = pins.createBuffer(5);
     buf[0] = LED0_ON_L + 4 * channel;
     buf[1] = on & 0xff;
@@ -152,7 +123,6 @@ function setPwm(channel: number, on: number, off: number): void {
     buf[4] = (off >> 8) & 0xff;
     pins.i2cWriteBuffer(PCA9685_ADDRESS, buf);
 }
-
 
 function setStepper(index: number, dir: boolean): void {
     if (index == 1) {
@@ -285,46 +255,6 @@ export function StepperDual(degree1: number, degree2: number): void {
     MotorStopAll()
 }
 
-/**
- * Stepper Car move forward
- * @param distance Distance to move in cm; eg: 10, 20
- * @param diameter diameter of wheel in mm; eg: 48
-*/
-//% blockId=motorbit_stpcar_move block="Car Forward|Distance(cm) %distance|Wheel Diameter(mm) %diameter"
-//% weight=88
-export function StpCarMove(distance: number, diameter: number): void {
-    if (!initialized) {
-        initPCA9685()
-    }
-    let delay = 10240 * 10 * distance / 3 / diameter; // use 3 instead of pi
-    setStepper(1, delay > 0);
-    setStepper(2, delay > 0);
-    delay = Math.abs(delay);
-    basic.pause(delay);
-    MotorStopAll()
-}
-
-/**
- * Stepper Car turn by degree
- * @param turn Degree to turn; eg: 90, 180, 360
- * @param diameter diameter of wheel in mm; eg: 48
- * @param track track width of car; eg: 125
-*/
-//% blockId=motorbit_stpcar_turn block="Car Turn|Degree %turn|Wheel Diameter(mm) %diameter|Track(mm) %track"
-//% weight=87
-//% blockGap=50
-export function StpCarTurn(turn: number, diameter: number, track: number): void {
-    if (!initialized) {
-        initPCA9685()
-    }
-    let delay = 10240 * turn * track / 360 / diameter;
-    setStepper(1, delay < 0);
-    setStepper(2, delay > 0);
-    delay = Math.abs(delay);
-    basic.pause(delay);
-    MotorStopAll()
-}
-
 //% blockId=motorbit_stop_all block="Motor Stop All"
 //% weight=81
 //% blockGap=50
@@ -373,7 +303,7 @@ export function MotorRun(index: Motors, speed: number): void {
 
 /**
  * Execute single motors with delay
- * @param index Motor Index; eg: A01A02, B01B02, A03A04, B03B04
+ * @param index Motor Index; eg: M1, M2, M3, M4
  * @param speed [-255-255] speed of motor; eg: 150, -150
  * @param delay seconde delay to stop; eg: 1
 */
@@ -389,9 +319,9 @@ export function MotorRunDelay(index: Motors, speed: number, delay: number): void
 
 /**
  * Execute two motors at the same time
- * @param motor1 First Motor; eg: A01A02, B01B02
+ * @param motor1 First Motor; eg: M1, M2
  * @param speed1 [-255-255] speed of motor; eg: 150, -150
- * @param motor2 Second Motor; eg: A03A04, B03B04
+ * @param motor2 Second Motor; eg: M3, M4
  * @param speed2 [-255-255] speed of motor; eg: 150, -150
 */
 //% blockId=motorbit_motor_dual block="Motor|%motor1|speed %speed1|%motor2|speed %speed2"
@@ -404,27 +334,6 @@ export function MotorRunDual(motor1: Motors, speed1: number, motor2: Motors, spe
     MotorRun(motor1, speed1);
     MotorRun(motor2, speed2);
 }
-
-/**
- * Execute two motors at the same time
- * @param motor1 First Motor; eg: A01A02, B01B02
- * @param speed1 [-255-255] speed of motor; eg: 150, -150
- * @param motor2 Second Motor; eg: A03A04, B03B04
- * @param speed2 [-255-255] speed of motor; eg: 150, -150
-*/
-//% blockId=motorbit_motor_dualDelay block="Motor|%motor1|speed %speed1|%motor2|speed %speed2|delay %delay|s "
-//% weight=83
-//% inlineInputMode=inline
-//% speed1.min=-255 speed1.max=255
-//% speed2.min=-255 speed2.max=255
-//% name.fieldEditor="gridpicker" name.fieldOptions.columns=5
-export function MotorRunDualDelay(motor1: Motors, speed1: number, motor2: Motors, speed2: number, delay: number): void {
-    MotorRun(motor1, speed1);
-    MotorRun(motor2, speed2);
-	basic.pause(delay * 1000);
-	MotorRun(motor1, 0);
-    MotorRun(motor2, 0);
-    }
 
 //% blockId="motorbit_rus04" block="On-board Ultrasonic part %index show color %rgb effect %effect" 
 //% weight=78
@@ -443,7 +352,7 @@ export function Ultrasonic_reading_distance(): number {
 //% blockId=Setting_the_on_board_lights block="Setting the on-board lights %index|color|%rgb"
 //% weight=76
 export function Setting_the_on_board_lights(offset: Offset,rgb: RgbColors): void {
- sensors.board_rus04_rgb(DigitalPin.P16, offset, 0, rgb, rgb_ColorEffect.None);
+    sensors.board_rus04_rgb(DigitalPin.P16, offset, 0, rgb, rgb_ColorEffect.None);
 }
 	
 //% blockId=close_the_on_board_lights block="close the on-board lights %index color"
