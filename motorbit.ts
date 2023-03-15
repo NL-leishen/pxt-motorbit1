@@ -352,22 +352,22 @@ export function Ultrasonic_reading_distance(): number {
 //% blockId=Setting_the_on_board_lights block="Setting the on-board lights %index|color|%rgb"
 //% weight=76
 export function Setting_the_on_board_lights(offset: Offset,rgb: RgbColors): void {
-    sensors.board_rus04_rgb(DigitalPin.P16, offset, 0, rgb, rgb_ColorEffect.None);
+    sensors.board_rus04_rgb(DigitalPin.P16, offset, 0, rgb, ColorEffect.None);
 }
 	
 //% blockId=close_the_on_board_lights block="close the on-board lights %index color"
 //% weight=75
 export function close_the_on_board_lights(offset: Offset): void {
- sensors.board_rus04_rgb(DigitalPin.P16, offset, 0, RgbColors.Black, rgb_ColorEffect.None);
+ sensors.board_rus04_rgb(DigitalPin.P16, offset, 0, RgbColors.Black, ColorEffect.None);
 }
 	
 //% blockId=close_all_the_on_board_lights block="close all the on-board lights"
 //% weight=74
 export function close_all_the_on_board_lights(): void {
- sensors.board_rus04_rgb(DigitalPin.P16, 0, 0, RgbColors.Black, rgb_ColorEffect.None);
- sensors.board_rus04_rgb(DigitalPin.P16, 1, 0, RgbColors.Black, rgb_ColorEffect.None);
- sensors.board_rus04_rgb(DigitalPin.P16, 2, 0, RgbColors.Black, rgb_ColorEffect.None);
- sensors.board_rus04_rgb(DigitalPin.P16, 3, 0, RgbColors.Black, rgb_ColorEffect.None);
+ sensors.board_rus04_rgb(DigitalPin.P16, 0, 0, RgbColors.Black, ColorEffect.None);
+ sensors.board_rus04_rgb(DigitalPin.P16, 1, 0, RgbColors.Black, ColorEffect.None);
+ sensors.board_rus04_rgb(DigitalPin.P16, 2, 0, RgbColors.Black, ColorEffect.None);
+ sensors.board_rus04_rgb(DigitalPin.P16, 3, 0, RgbColors.Black, ColorEffect.None);
 }
 	
 }
